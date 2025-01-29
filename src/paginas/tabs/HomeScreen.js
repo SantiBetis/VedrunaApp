@@ -8,17 +8,6 @@ import { PublicacionesScreen } from './PublicacionesScreen';
 
 const Tab = createBottomTabNavigator();
 
-export function Header() {
-  return (
-    <View style={styles.container}>
-      <Image
-        source={require('../../../assets/img/logo-vedruna.png')} 
-        style={styles.logo}
-      />
-      <Text style={styles.text}>VEDRUNA</Text>
-    </View>
-  );
-}
 export function HomeScreen() {
   return (
     <Tab.Navigator

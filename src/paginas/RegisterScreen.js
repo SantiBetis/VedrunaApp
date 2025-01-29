@@ -1,6 +1,6 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
 import React, { useState } from 'react';
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { app } from '../FirebaseConfig';
 
 export function RegisterScreen({ navigation }) {
@@ -13,7 +13,7 @@ export function RegisterScreen({ navigation }) {
   const [lastName2, setLastName2] = useState('');
   const auth = getAuth(app);
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     if (!email || !password || !confirmPassword || !nick || !name || !lastName1 || !lastName2) {
       Alert.alert('Error', 'Por favor, completa todos los campos.');
       return;
@@ -24,15 +24,38 @@ export function RegisterScreen({ navigation }) {
       return;
     }
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        console.log('Cuenta creada');
-        navigation.navigate('LoginScreen');
-      })
-      .catch((error) => {
-        console.log('Error al crear cuenta:', error);
-        Alert.alert('Error', 'No se pudo crear la cuenta. Verifica los datos.');
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+    
+      await updateProfile(user, { displayName: nick });
+
+      const data = {
+        nick: nick,
+        user_id: user.uid,
+        nombre: name,
+        apellidos: `${lastName1} ${lastName2}`,
+        profile_picture: "../../assets/img/user.png"
+      };
+
+      const serverUrl = 'http://localhost:8080/proyecto01/users';
+      const response = await fetch(serverUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
       });
+
+      if (response.ok) {
+        Alert.alert('Éxito', 'Usuario registrado correctamente.');
+        navigation.navigate('LoginScreen');
+      } else {
+        const errorData = await response.json();
+        Alert.alert('Error', `No se pudo guardar los datos: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error("Error en el registro:", error);
+      Alert.alert('Error', 'No se pudo completar el registro.');
+    }
   };
 
   return (
